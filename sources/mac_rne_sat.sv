@@ -32,6 +32,8 @@ module mac_rne_sat (
             accumulate <= 28'b0;
 	end else begin
 
+            product <= a*b;
+            quotient <= product >>> 8;
             //accumulate
             if(clr && en) begin  //clr = 1 and en = 1
                 accumulate <= {{12{product[15]}},product};
