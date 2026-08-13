@@ -43,9 +43,9 @@ module mac_rne_sat (
 
             //readout and saturation
             //round half to even at 8-LSBs
-            remainder = accumulate - (quotient <<< 8);
 	    res_valid <= rd;
 	    if(rd) begin
+                remainder = accumulate - (quotient <<< 8);
 	        if(remainder > 128 || (remainder == 128 && quotient%2 == 1)) begin
                     rounded = quotient+ 1;
 	        end else if(remainder < 128 || (remainder == 128 && quotient%2 == 0)) begin
