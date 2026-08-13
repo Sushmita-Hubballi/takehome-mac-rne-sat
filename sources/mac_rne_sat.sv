@@ -21,7 +21,7 @@ module mac_rne_sat (
     logic signed [7:0] remainder;
     logic signed [16:0] rounded;
 
-    assign product = a*b;
+    //assign product = a*b;
     //assign quotient = product >>> 8;
 
     always_ff @(posedge clk) begin
@@ -32,7 +32,7 @@ module mac_rne_sat (
             accumulate <= 28'b0;
 	end else begin
 
-            quotient <= product >>> 8;
+    	    product = a*b;
             //accumulate
             if(clr && en) begin  //clr = 1 and en = 1
                 accumulate <= {{12{product[15]}}, product};
@@ -46,7 +46,8 @@ module mac_rne_sat (
             //round half to even at 8-LSBs
 	    res_valid <= rd;
 	    if(rd) begin
-                remainder = accumulate - (quotient <<< 8);
+                quotient =  accumulate >>> 8;
+                remainder = accumulate - ({accumulate[27:8],8'b0});
 	        if(remainder > 128 || (remainder == 128 && quotient%2 == 1)) begin
                     rounded = quotient+ 1;
 	        end else if(remainder < 128 || (remainder == 128 && quotient%2 == 0)) begin
