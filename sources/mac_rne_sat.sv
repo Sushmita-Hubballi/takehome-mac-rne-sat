@@ -47,9 +47,9 @@ module mac_rne_sat (
 	    if(rd) begin
                 quotient =  accumulate >>> 8;
                 remainder = accumulate - ({accumulate[27:8],8'b0});
-	        if(remainder > 128 || (remainder == 128 && quotient%2 == 1)) begin
+	        if(remainder > 128 || (remainder == 128 && quotient[0] == 1)) begin
                     rounded = quotient+ 1;
-	        //end else if(remainder < 128 || (remainder == 128 && quotient%2 == 0)) begin
+	        //end else if(remainder < 128 || (remainder == 128 && quotient[0] == 0)) begin
 	        end else begin
                     rounded = quotient;
 	        end;
