@@ -15,5 +15,57 @@ module mac_rne_sat (
     output logic               res_valid, // 1-cycle pulse, one cycle after rd
     output logic               ovf        // sticky saturation flag
 );
+    logic signed [27:0] accumulate;
+    logic signed [15:0] product;
+    logic signed [19:0] quotient;
+    logic signed [7:0] remainder;
+    logic signed [16:0] rounded;
+
+    assign product = a*b;
+    assign quotient = product >>> 8;
+
+    always_ff @(posedge clk) begin
+	if(rst) begin
+            res       <= 16'b0;
+            res_valid <= 1'b0;
+            ovf       <= 1'b0;
+            accumulate <= 28'b0;
+	end else begin
+
+            //accumulate
+            if(clr && en) begin  //clr = 1 and en = 1
+                accumulate <= {{12{product[15]}},product};
+            end else if(!clr && en) begin  //clr = 0 and en = 1
+                accumulate <= accumulate + product;
+	    end else if(clr) begin //clr = 1 and en = 0
+                accumulate <= 28'b0;
+            end;
+
+            //readout and saturation
+            //round half to even at 8-LSBs
+            remainder = accumulate - (quotient <<< 8);
+	    res_valid <= rd;
+	    if(rd) begin
+	        if(remainder > 128 || (remainder == 128 && quotient%2 == 1)) begin
+                    rounded = quotient+ 1;
+	        end else if(remainder < 128 || (remainder == 128 && quotient%2 == 0)) begin
+                    rounded = quotient;
+	        end;
+
+		if(rounded[16] != rounded[15]) begin
+			ovf <= 1'b1;
+			if(rounded[16] == 1'b0)
+				res <= 16'h7fff;
+			else
+				res <= 16'h8000;
+		end else begin
+			if(clr)
+				ovf <= 1'b0;
+
+			res <= rounded;
+		end;
+	    end;
+	end;
+    end;
 
 endmodule
