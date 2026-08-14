@@ -58,13 +58,8 @@ snapshot. A `clr` asserted in the same cycle as `rd` clears the accumulator
 
 **Rounding — round-half-to-even at the 8 LSBs.** Let
 `q = floor(snapshot / 256)` and `r = snapshot − 256·q` to handle both 
-<<<<<<< HEAD
-positive and negative values, so that
-`0 ≤ r ≤ 255` — including for negative snapshots. The rounded value is:
-=======
  positive and negative values.
 'r' is unsigned value with range `0 ≤ r ≤ 255` — including for negative snapshots. 
->>>>>>> acc0eb3 (modify spec)
 
  The rounded value is:
 - `q` if `r < 128`;
