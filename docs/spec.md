@@ -58,9 +58,10 @@ snapshot. A `clr` asserted in the same cycle as `rd` clears the accumulator
 
 **Rounding — round-half-to-even at the 8 LSBs.** Let
 `q = floor(snapshot / 256)` and `r = snapshot − 256·q` to handle both 
-positive and negative values, so that
-`0 ≤ r ≤ 255` — including for negative snapshots. The rounded value is:
+ positive and negative values.
+'r' is unsigned value with range `0 ≤ r ≤ 255` — including for negative snapshots. 
 
+ The rounded value is:
 - `q` if `r < 128`;
 - `q + 1` if `r > 128`;
 - on a tie (`r == 128`): `q` if `q` is even, else `q + 1`.
@@ -70,10 +71,11 @@ to the signed 16-bit range `[−32768, +32767]`. Note the order: rounding is
 performed first and may itself carry the value out of the 16-bit range;
 saturation applies to the **rounded** value.
 
-**Registration and hold.** `res` and `res_valid` are registered outputs.
-If 'rd' is asserted in cycle *t*, 'res_valid' and 'res' is updated in cycle *t+1*.
-'res' is 1 and `res` carries the rounded, saturated
-snapshot. `res_valid` is exactly one cycle wide per `rd`. Between readouts,
+**res and res_valid update** `res` and `res_valid` are updated synchronously on 'clk' edge
+when 'rd' is detected.
+If 'rd' is asserted in cycle *t*, 'res_valid' and 'res' are updated in cycle *t+1*.
+'res' is asserted and `res` carries the rounded, saturated snapshot. 
+`res_valid` is exactly one cycle wide per `rd`. Between readouts,
 `res` **holds** its last value; it does not clear when `res_valid` is low.
 Back-to-back `rd` cycles are permitted and each takes its own snapshot.
 
@@ -100,12 +102,13 @@ Worked examples (`rd → res_valid`):
 `ovf` is a registered, sticky flag:
 
 - **Set** whenever a readout saturates (the rounded snapshot fell outside
-  `[−32768, 32767]`). The flag update lands in the same cycle as the
-  corresponding `res_valid`.
+  `[−32768, 32767]`), the flag update lands in the same cycle.
+  If 'rd' asserted in cycle *t-1*, 'ovf' (if occurred) must be updated 
+  in cycle *t*.
 - **Cleared** only by `clr` (or `rst`).
-- **Same-cycle priority:** if a saturating readout coincides with `clr` in
-  the same cycle, the set wins — `ovf` is 1 in the following cycle. `clr`
-  clears the flag only when no saturating readout lands that same cycle.
+- **Same-cycle priority:** saturation set 'ovf' has higher priority over 'clr'
+  if 'clr' and saturating readout coincide.
+ `clr` clears the flag only when no saturating readout lands that same cycle.
 - A readout that does not saturate leaves `ovf` unchanged. `res` always
   carries the clamped value; saturation is signaled only via `ovf`.
 
