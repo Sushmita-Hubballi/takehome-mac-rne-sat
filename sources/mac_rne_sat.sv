@@ -20,6 +20,7 @@ module mac_rne_sat (
     logic signed [19:0] quotient;
     logic [7:0] remainder;
     logic signed [16:0] rounded;
+    logic sat_flag = 1'b0;
     assign product = a*b;
     //assign quotient = product >>> 8;
 
@@ -55,22 +56,24 @@ module mac_rne_sat (
 	        end;
 
 		if(rounded[16] != rounded[15]) begin
-			ovf <= 1'b1;
-			if(rounded[16] == 1'b0)
+			sat_flag = 1'b1;
+			if(rounded[16] == 1'b0) begin
 				res <= 16'h7fff;
-			else
+			end else begin
 				res <= 16'h8000;
+			end;
 		end else begin
-			ovf <= 1'b0;
+			sat_flag = 1'b0;
 			res <= rounded;
 		end;
-	     else begin
-		     if(clr == 1) begin
-		      ovf <= 1'b0;
-	             end;
 	     end;
 
-	end;
+	     if(sat_flag) begin
+		     ovf <= 1'b1;
+             end else if(clr)
+		     ovf <= 1'b0;
+             end;
+
     end;
 
 endmodule
