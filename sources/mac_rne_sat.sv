@@ -20,7 +20,7 @@ module mac_rne_sat (
     logic signed [19:0] quotient;
     logic [7:0] remainder;
     logic signed [16:0] rounded;
-    logic saturation_done;
+    logic saturation_done = 1'b0;
     assign product = a*b;
     //assign quotient = product >>> 8;
 
