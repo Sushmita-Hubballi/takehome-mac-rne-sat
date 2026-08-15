@@ -49,12 +49,11 @@ not be handled.
 
 Asserting `rd` in cycle *t* requests a snapshot readout.
 
-**Snapshot value.** The snapshot is the accumulator value as it stood at
-the end of cycle *t−1* — that is, **before** any accumulator update
-(`en`/`clr`) occurring in cycle *t*. An `en` asserted in the same cycle as
-`rd` still updates the accumulator normally; it is simply not part of that
-snapshot. A `clr` asserted in the same cycle as `rd` clears the accumulator
-**after** the snapshot is taken (the readout returns the pre-clear value).
+**Snapshot value** Snapshot is the value of accumulator in cycle *t*
+To perform rounding and saturation, the value of accumulator(at cycle *t*) 
+is used directly without creating another register to capture snapshot.
+(Since accumulator is a registered value, it's update based on 'clr' or 'en'
+ is effective only at the next clock edge).
 
 **Rounding — round-half-to-even at the 8 LSBs.** Let
 `q = floor(snapshot / 256)` and `r = snapshot − 256·q` to handle both 
@@ -71,15 +70,13 @@ to the signed 16-bit range `[−32768, +32767]`. Note the order: rounding is
 performed first and may itself carry the value out of the 16-bit range;
 saturation applies to the **rounded** value.
 
-**res and res_valid update** `res` and `res_valid` are updated when 'rd' is detected
-on the rising edge of 'clk'.
-If 'rd' is asserted in cycle *t*, 'res_valid' and 'res' updated values should be available
-by end of cycle *t+1*.
-'res' is asserted and `res` carries the rounded, saturated snapshot. 
-`res_valid` is exactly one cycle wide per `rd`. Between readouts,
->>>>>>> 36e5e71 (Sync spec with test branch)
-`res` **holds** its last value; it does not clear when `res_valid` is low.
-Back-to-back `rd` cycles are permitted and each takes its own snapshot.
+**res and res_valid update** 
+'res_valid' is set in the next cycle of rd. Which means it is 1 cycle delayed version of 'rd'.
+`res_valid` is exactly one cycle wide per `rd`.
+`res` carries the rounded, saturated snapshot. Since 'res' must be available in cycle *t+1*, 
+ rounding and saturation must be computed combinationally. 
+ Between readouts, `res` **holds** its last value; it does not clear when `res_valid` is low.
+ Back-to-back `rd` cycles are permitted and each takes its own snapshot.
 
 
 Worked examples (`snapshot → res`):
@@ -124,6 +121,7 @@ to 0.
 ## 7. Implementation constraints
 
 - Synthesizable SystemVerilog, compatible with Icarus Verilog (`-g2012`).
+  Note: output ports aren't allowed in functions in SystemVerilog for Icarus Verilog.
 - No SystemVerilog Assertions (SVA).
 - Do not change the module name, port names, directions, or widths.
 - Single clock domain. No latches.
