@@ -21,60 +21,58 @@ module mac_rne_sat (
     logic [7:0] remainder;
     logic signed [16:0] rounded;
     logic sat_flag = 1'b0;
-    assign product = a*b;
     //assign quotient = product >>> 8;
 
-    always_ff @(posedge clk) begin
-	if(rst) begin
-            res       <= 16'b0;
-            res_valid <= 1'b0;
-            ovf       <= 1'b0;
-            accumulate <= 28'b0;
-	end else begin
 
-            //accumulate
-            if(clr && en) begin  //clr = 1 and en = 1
-                accumulate <= {{12{product[15]}}, product};
-            end else if(!clr && en) begin  //clr = 0 and en = 1
-                accumulate <= accumulate + {{12{product[15]}}, product};
-	    end else if(clr) begin //clr = 1 and en = 0
-                accumulate <= 28'b0;
-            end;
+ always @(*) begin
+         product = a*b;
+	 quotient = accumulate >>> 8;
+	 remainder = accumulate[7:0];
+	 if(remainder > 8'd128 || (remainder == 8'd128 && quotient[0] == 1))
+		 rounded = quotient + 17'sd1;
+	 else
+		 rounded = quotient;
+ end;
 
-            //readout and saturation
-            //round half to even at 8-LSBs
-	    res_valid <= rd;
-	    if(rd) begin
-                quotient =  accumulate >>> 8;
-                remainder = accumulate[7:0];
-                //remainder = accumulate - ({accumulate[27:8],8'b0});
-	        if(remainder > 128 || (remainder == 128 && quotient[0] == 1)) begin
-                    rounded = quotient+ 1;
-	        //end else if(remainder < 128 || (remainder == 128 && quotient[0] == 0)) begin
-	        end else begin
-                    rounded = quotient;
-	        end;
 
-		if(rounded[16] != rounded[15]) begin
-			sat_flag = 1'b1;
-			if(rounded[16] == 1'b0) begin
-				res <= 16'h7fff;
-			end else begin
-				res <= 16'h8000;
-			end;
-		end else begin
-			sat_flag = 1'b0;
-			res <= rounded;
-		end;
-	    end;
+ always_ff @(posedge clk) begin
+	 if(rst)begin
+		 res <= 16'b0;
+		 res_valid <= 1'b0;
+		 ovf <= 1'b0;
+		 accumulate <= 28'b0;
+	 end else begin
+		 //accumulate
+		 if(clr && en) //clr =1 and en =1
+			 accumulate <= {{12{product[15]}}, product};
+		 else if (!clr && en) //clr=0 and en =1
+			 accumulate <= accumulate + {{12{product[15]}},product};
+		 else if (clr)
+			 accumulate <= 28'b0;
 
-	     if(sat_flag) begin
-         	     ovf <= 1'b1;
-	     end else if(clr) begin
-		     ovf <= 1'b0;
-             end;
+		 //readout
+		 //rounding and saturation
+		 res_valid <= rd;
+		 if(rd) begin
+			 if(rounded[16] != rounded[15])begin
+				 sat_flag = 1'b1;
+				 if(rounded[16] == 0)
+					 res <= 16'h7fff;
+				 else
+					 res <= 16'h8000;
+			 end else begin
+				 sat_flag = 1'b0;
+				 res <= rounded;
+			 end;
+		 end;
 
-    end;
-    end;
+		 if(sat_flag)
+			 ovf <= 1'b1;
+		 else if(clr)
+			 ovf <= 1'b0;
+
+	 end;
+
+ end;
 
 endmodule
