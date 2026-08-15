@@ -62,6 +62,7 @@ module mac_rne_sat (
 			else
 				res <= 16'h8000;
 		end else begin
+			saturation_done = 1'b0;
 			res <= rounded;
 		end;
 	     end;
