@@ -49,7 +49,14 @@ not be handled.
 
 Asserting `rd` in cycle *t* requests a readout.
 
-To perform rounding and saturation, use the value of accumulator in current cycle.
+**Snapshot value** The snapshot is the accumulator value as it stood at the end of 
+cycle *t−1* — that is, before any accumulator update (en/clr) occurring in cycle *t*. 
+An 'en' asserted in the same cycle as 'rd' still updates the accumulator normally; 
+it is simply not part of that snapshot. 
+A 'clr' asserted in the same cycle as rd clears the accumulator after the snapshot 
+is taken (the readout returns the pre-clear value).
+
+To perform rounding and saturation, use the value of accumulator at the end of cycle *t-1*in current cycle.
 (Since accumulator is a registered value, it's update based on 'clr' or 'en'
  is effective only at the next clock edge).
 
