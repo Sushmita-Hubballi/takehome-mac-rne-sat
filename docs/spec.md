@@ -69,8 +69,8 @@ performed first and may itself carry the value out of the 16-bit range;
 saturation applies to the **rounded** value.
 
 **res and res_valid update** 
- updat' and 'res_valid' are updated at each rising edge (with `rst = 0`):
-'res_valid' is a pulse asserted when 'rd' is 1. (it is 1 cycle delayed version of 'rd')
+ 'res' and 'res_valid' are updated at each rising edge (with `rst = 0`).
+ 'res_valid' and 'res' are updated in the same cycle when 'rd' is 1.
 
 `res` carries the rounded, saturated value. Since 'res' must be available in cycle *t+1*, 
  rounding and saturation must be computed combinationally. 
@@ -85,14 +85,6 @@ Worked examples (`accumulator → res`):
 | 640      | 2  | 128 | 2   | tie, q even → stays       |
 | 896      | 3  | 128 | 4   | tie, q odd → rounds up    |
 | −384     | −2 | 128 | −2  | tie, q even → stays       |
-
-Worked examples (`rd → res_valid`):
-
-|clk cycle| a  | b | en | rd | res_valid | res| note                    |
-|---------|----|---|----|----|-----------|----|-------------------------|
-|t-1      | 64 |10 | 1  | 0  | 0         | 0  |res holds it's last value|
-| t       | 0  | 0 | 0  | 1  | 0         | 0  |res holds it's last value|
-|t+1      | 0  | 0 | 0  | 0  | 1         | 2  |res updates it's value   |
 
 
 ## 5. Overflow flag
