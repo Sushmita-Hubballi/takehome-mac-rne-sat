@@ -71,9 +71,10 @@ to the signed 16-bit range `[−32768, +32767]`. Note the order: rounding is
 performed first and may itself carry the value out of the 16-bit range;
 saturation applies to the **rounded** value.
 
-**res and res_valid update** `res` and `res_valid` are updated synchronously on 'clk' edge
-when 'rd' is detected.
-If 'rd' is asserted in cycle *t*, 'res_valid' and 'res' are updated in cycle *t+1*.
+**res and res_valid update** `res` and `res_valid` are updated when 'rd' is detected
+on the rising edge of 'clk'.
+If 'rd' is asserted in cycle *t*, 'res_valid' and 'res' updated values should be available
+by end of cycle *t+1*.
 'res' is asserted and `res` carries the rounded, saturated snapshot. 
 `res_valid` is exactly one cycle wide per `rd`. Between readouts,
 >>>>>>> 36e5e71 (Sync spec with test branch)
@@ -106,10 +107,11 @@ Worked examples (`rd → res_valid`):
   `[−32768, 32767]`), the flag update lands in the same cycle.
   If 'rd' asserted in cycle *t-1*, 'ovf' (if occurred) must be updated 
   in cycle *t*.
-- **Cleared** only by `clr` (or `rst`).
-- **Same-cycle priority:** saturation set 'ovf' has higher priority over 'clr'
-  if 'clr' and saturating readout coincide.
- `clr` clears the flag only when no saturating readout lands that same cycle.
+- **Cleared** only when `clr` = 1 or on 'rst'. 
+- **Same-cycle priority:** A saturating readout sets 'ovf' irrespective 
+ of 'clr'. 
+ 'ovf' is only cleared when no staurating readout occurs and 'clr' occurs in 
+  the same cycle.
 - A readout that does not saturate leaves `ovf` unchanged. `res` always
   carries the clamped value; saturation is signaled only via `ovf`.
 
