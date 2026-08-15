@@ -77,7 +77,7 @@ saturation applies to the **rounded** value.
 
 **res and res_valid update** 
  'res' and 'res_valid' are updated at each rising edge (with `rst = 0`).
- 'res_valid' and 'res' are updated in the same cycle when 'rd' is 1.
+ 'res_valid' and 'res' are updated in the same cycle as 'rd' = 1.
 
 `res` carries the rounded, saturated value. Since 'res' must be available in cycle *t+1*, 
  rounding and saturation must be computed combinationally. 
