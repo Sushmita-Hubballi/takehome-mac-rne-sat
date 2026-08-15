@@ -16,6 +16,7 @@ module mac_rne_sat (
     output logic               ovf        // sticky saturation flag
 );
     logic signed [27:0] accumulate;
+    logic signed [27:0] snapshot;
     logic signed [15:0] product;
     logic signed [19:0] quotient;
     logic [7:0] remainder;
@@ -30,6 +31,7 @@ module mac_rne_sat (
             res_valid <= 1'b0;
             ovf       <= 1'b0;
             accumulate <= 28'b0;
+            snapshot <= 28'b0;
 	end else begin
 
             //accumulate
@@ -41,12 +43,15 @@ module mac_rne_sat (
                 accumulate <= 28'b0;
             end;
 
+	    //Capture snapshot
+	    snapshot <= accumulator;
+
             //readout and saturation
             //round half to even at 8-LSBs
 	    res_valid <= rd;
 	    if(rd) begin
-                quotient =  accumulate >>> 8;
-                remainder = accumulate - ({accumulate[27:8],8'b0});
+                quotient =  snapshot >>> 8;
+                remainder = snapshot - ({snapshot[27:8],8'b0});
 	        if(remainder > 128 || (remainder == 128 && quotient[0] == 1)) begin
                     rounded = quotient+ 1;
 	        //end else if(remainder < 128 || (remainder == 128 && quotient[0] == 0)) begin
