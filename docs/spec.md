@@ -61,7 +61,7 @@ To perform rounding and saturation, use the value of accumulator at the end of c
  is effective only at the next clock edge).
 
 **Rounding — round-half-to-even at the 8 LSBs.** Let
-`q = floor(accumulator / 256)` and `r = accumulator − 256·q` to handle both 
+`q = floor(snapshot / 256)` and `r = snapshot − 256·q` to handle both 
  positive and negative values.
 'r' is unsigned value with range `0 ≤ r ≤ 255` — including for negative snapshots. 
 
