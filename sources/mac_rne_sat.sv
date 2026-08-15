@@ -67,8 +67,9 @@ module mac_rne_sat (
 		end;
 		ovf <= saturation_done;
 	     else begin
-		     if(clr)
-		     ovf <= 1'b0;
+		     if(clr == 1) begin
+		      ovf <= 1'b0;
+	             end;
 	     end;
 
 	end;
