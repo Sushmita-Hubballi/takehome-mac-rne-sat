@@ -20,7 +20,6 @@ module mac_rne_sat (
     logic signed [19:0] quotient;
     logic [7:0] remainder;
     logic signed [16:0] rounded;
-    logic saturation_done = 1'b0;
     assign product = a*b;
     //assign quotient = product >>> 8;
 
@@ -56,16 +55,15 @@ module mac_rne_sat (
 	        end;
 
 		if(rounded[16] != rounded[15]) begin
-			saturation_done = 1'b1;
+			ovf <= 1'b1;
 			if(rounded[16] == 1'b0)
 				res <= 16'h7fff;
 			else
 				res <= 16'h8000;
 		end else begin
-			saturation_done = 1'b0;
+			ovf <= 1'b0;
 			res <= rounded;
 		end;
-		ovf <= saturation_done;
 	     else begin
 		     if(clr == 1) begin
 		      ovf <= 1'b0;
