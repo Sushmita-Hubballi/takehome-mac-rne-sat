@@ -15,7 +15,7 @@ active-high.
 | `rst`       | in  | `logic`           | Synchronous, active-high reset.                  |
 | `en`        | in  | `logic`           | Accumulate `a*b` this cycle.                     |
 | `clr`       | in  | `logic`           | Clear the accumulator this cycle.                |
-| `rd`        | in  | `logic`           | Request a readout snapshot this cycle.           |
+| `rd`        | in  | `logic`           | Request a readout this cycle.           |
 | `a`         | in  | `logic signed [7:0]`  | Multiplicand.                                |
 | `b`         | in  | `logic signed [7:0]`  | Multiplier.                                  |
 | `res`       | out | `logic signed [15:0]` | Rounded + saturated readout result (registered). |
@@ -47,16 +47,14 @@ not be handled.
 
 ## 4. Readout path
 
-Asserting `rd` in cycle *t* requests a snapshot readout.
+Asserting `rd` in cycle *t* requests a readout.
 
-**Snapshot value** Snapshot is the value of accumulator in cycle *t*
-To perform rounding and saturation, the value of accumulator(at cycle *t*) 
-is used directly without creating another register to capture snapshot.
+To perform rounding and saturation, use the value of accumulator in current cycle.
 (Since accumulator is a registered value, it's update based on 'clr' or 'en'
  is effective only at the next clock edge).
 
 **Rounding — round-half-to-even at the 8 LSBs.** Let
-`q = floor(snapshot / 256)` and `r = snapshot − 256·q` to handle both 
+`q = floor(accumulator / 256)` and `r = accumulator − 256·q` to handle both 
  positive and negative values.
 'r' is unsigned value with range `0 ≤ r ≤ 255` — including for negative snapshots. 
 
@@ -71,17 +69,18 @@ performed first and may itself carry the value out of the 16-bit range;
 saturation applies to the **rounded** value.
 
 **res and res_valid update** 
-'res_valid' is set in the next cycle of rd. Which means it is 1 cycle delayed version of 'rd'.
-`res_valid` is exactly one cycle wide per `rd`.
-`res` carries the rounded, saturated snapshot. Since 'res' must be available in cycle *t+1*, 
+ updat' and 'res_valid' are updated at each rising edge (with `rst = 0`):
+'res_valid' is a pulse asserted when 'rd' is 1. (it is 1 cycle delayed version of 'rd')
+
+`res` carries the rounded, saturated value. Since 'res' must be available in cycle *t+1*, 
  rounding and saturation must be computed combinationally. 
  Between readouts, `res` **holds** its last value; it does not clear when `res_valid` is low.
- Back-to-back `rd` cycles are permitted and each takes its own snapshot.
+ Back-to-back `rd` cycles are permitted.
 
 
-Worked examples (`snapshot → res`):
+Worked examples (`accumulator → res`):
 
-| snapshot | q  | r   | res | note                      |
+| accumulator | q  | r   | res | note                      |
 |----------|----|-----|-----|---------------------------|
 | 640      | 2  | 128 | 2   | tie, q even → stays       |
 | 896      | 3  | 128 | 4   | tie, q odd → rounds up    |
@@ -100,15 +99,11 @@ Worked examples (`rd → res_valid`):
 
 `ovf` is a registered, sticky flag:
 
-- **Set** whenever a readout saturates (the rounded snapshot fell outside
-  `[−32768, 32767]`), the flag update lands in the same cycle.
-  If 'rd' asserted in cycle *t-1*, 'ovf' (if occurred) must be updated 
-  in cycle *t*.
+- **Set** whenever a readout saturates, the flag update lands in the same cycle.
 - **Cleared** only when `clr` = 1 or on 'rst'. 
 - **Same-cycle priority:** A saturating readout sets 'ovf' irrespective 
  of 'clr'. 
- 'ovf' is only cleared when no staurating readout occurs and 'clr' occurs in 
-  the same cycle.
+ 'ovf' is only cleared when 'clr' is 1 and no staurating readout occurs
 - A readout that does not saturate leaves `ovf` unchanged. `res` always
   carries the clamped value; saturation is signaled only via `ovf`.
 
