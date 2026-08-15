@@ -66,14 +66,15 @@ module mac_rne_sat (
 			sat_flag = 1'b0;
 			res <= rounded;
 		end;
-	     end;
+	    end;
 
 	     if(sat_flag) begin
-		     ovf <= 1'b1;
-             end else if(clr)
+         	     ovf <= 1'b1;
+	     end else if(clr) begin
 		     ovf <= 1'b0;
              end;
 
+    end;
     end;
 
 endmodule
