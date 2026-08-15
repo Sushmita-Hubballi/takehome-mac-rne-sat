@@ -55,21 +55,18 @@ module mac_rne_sat (
 		 res_valid <= rd;
 		 if(rd) begin
 			 if(rounded[16] != rounded[15])begin
-				 sat_flag = 1'b1;
+				 ovf <= 1'b1;
 				 if(rounded[16] == 0)
 					 res <= 16'h7fff;
 				 else
 					 res <= 16'h8000;
 			 end else begin
-				 sat_flag = 1'b0;
+				 ovf <= 1'b0;
 				 res <= rounded;
 			 end;
-		 end;
-
-		 if(sat_flag)
-			 ovf <= 1'b1;
-		 else if(clr)
+		 end else if(clr) begin
 			 ovf <= 1'b0;
+		 end;
 
 	 end;
 
