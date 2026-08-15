@@ -68,10 +68,11 @@ module mac_rne_sat (
 	     end;
 
 	     //ovf update
-	     if(saturation_done)
+	     if(saturation_done) begin
 		     ovf <= 1'b1;
-	     else if(clr)
+             end else if(clr) begin
 		     ovf <= 1'b0;
+	     end;
 
 	end;
     end;
