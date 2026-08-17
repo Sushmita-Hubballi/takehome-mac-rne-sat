@@ -44,14 +44,14 @@ module mac_rne_sat (
             end;
 
 	    //Capture snapshot
-	    snapshot <= accumulate;
+	    //snapshot <= accumulate;
 
             //readout and saturation
             //round half to even at 8-LSBs
 	    res_valid <= rd;
 	    if(rd) begin
-                quotient =  snapshot >>> 8;
-                remainder = snapshot - ({snapshot[27:8],8'b0});
+                quotient =  accumulate >>> 8;
+          remainder = accumulate - ({accumulate[27:8],8'b0});
 	        if(remainder > 128 || (remainder == 128 && quotient[0] == 1)) begin
                     rounded = quotient+ 1;
 	        //end else if(remainder < 128 || (remainder == 128 && quotient[0] == 0)) begin
