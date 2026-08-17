@@ -61,9 +61,8 @@ To perform rounding and saturation, use the value of accumulator at the end of c
  is effective only at the next clock edge).
 
 **Rounding — round-half-to-even at the 8 LSBs.** Let
-`q = floor(snapshot / 256)` and `r = snapshot − 256·q` to handle both 
- positive and negative values.
-'r' is a value with range `0 ≤ r ≤ 255` — including for negative snapshots. 
+`q = floor(snapshot / 256)` and `r = snapshot − 256·q` so that 
+ `0 ≤ r ≤ 255` — including for negative snapshots. 
 
  The rounded value is:
 - `q` if `r < 128`;
@@ -98,11 +97,13 @@ Worked examples (`accumulator → res`):
 
 `ovf` is a registered, sticky flag:
 
-- **Set** whenever a readout saturates, the flag update lands in the same cycle.
+- **Set** whenever a readout saturates (the rounded snapshot fell outside 
+[−32768, 32767]). The flag update lands in the same cycle as the 
+corresponding 'res_valid'
 - **Cleared** only when `clr` = 1 or on 'rst'. 
-- **Same-cycle priority:** A saturating readout sets 'ovf' irrespective 
- of 'clr'. 
- 'ovf' is only cleared when 'clr' is 1 and no staurating readout occurs
+- **Same-cycle priority:** if a saturating readout coincides with 'clr' in 
+the same cycle, the set wins — 'ovf' is 1 in the following cycle. 
+'clr' clears the flag only when no saturating readout lands that same cycle. 
 - A readout that does not saturate leaves `ovf` unchanged. `res` always
   carries the clamped value; saturation is signaled only via `ovf`.
 
