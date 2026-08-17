@@ -44,7 +44,7 @@ module mac_rne_sat (
             end;
 
 	    //Capture snapshot
-	    snapshot <= accumulator;
+	    snapshot <= accumulate;
 
             //readout and saturation
             //round half to even at 8-LSBs
