@@ -1,8 +1,7 @@
 `timescale 1ns/1ps
 //
-// mac_rne_sat -- implement per doc/spec.md.
-// Do not change the module name, port list, or port directions.
-// Synthesizable SystemVerilog only (Icarus Verilog, -g2012). No SVA.
+// mac_rne_sat -- implement your golden solution in this file per
+// docs/spec.md, and push it to your fork's mac_rne_sat_golden branch.
 //
 module mac_rne_sat (
     input  logic               clk,
@@ -16,12 +15,67 @@ module mac_rne_sat (
     output logic               res_valid, // 1-cycle pulse, one cycle after rd
     output logic               ovf        // sticky saturation flag
 );
+    logic signed [27:0] accumulate;
+    logic signed [27:0] snapshot;
+    logic signed [15:0] product;
+    logic signed [19:0] quotient;
+    logic [7:0] remainder;
+    logic signed [16:0] rounded;
 
-    // TODO: implement the accumulate / readout / overflow logic per
-    // doc/spec.md. The tie-offs below only keep the skeleton compiling;
-    // replace them with your implementation.
-    assign res       = '0;
-    assign res_valid = 1'b0;
-    assign ovf       = 1'b0;
+    assign product = a*b;
+    //assign quotient = product >>> 8;
+
+    always_ff @(posedge clk) begin
+	if(rst) begin
+            res       <= 16'b0;
+            res_valid <= 1'b0;
+            ovf       <= 1'b0;
+            accumulate <= 28'b0;
+            snapshot <= 28'b0;
+	end else begin
+
+            //accumulate
+            if(clr && en) begin  //clr = 1 and en = 1
+                accumulate <= {{12{product[15]}}, product};
+            end else if(!clr && en) begin  //clr = 0 and en = 1
+                accumulate <= accumulate + {{12{product[15]}}, product};
+	    end else if(clr) begin //clr = 1 and en = 0
+                accumulate <= 28'b0;
+            end;
+
+	    //Capture snapshot
+	    snapshot <= accumulate;
+
+            //readout and saturation
+            //round half to even at 8-LSBs
+	    res_valid <= rd;
+	    if(rd) begin
+                quotient =  snapshot >>> 8;
+                remainder = snapshot - ({snapshot[27:8],8'b0});
+	        if(remainder > 128 || (remainder == 128 && quotient[0] == 1)) begin
+                    rounded = quotient+ 1;
+	        //end else if(remainder < 128 || (remainder == 128 && quotient[0] == 0)) begin
+	        end else begin
+                    rounded = quotient;
+	        end;
+
+		if(rounded[16] != rounded[15]) begin
+			ovf <= 1'b1;
+			if(rounded[16] == 1'b0)
+				res <= 16'h7fff;
+			else
+				res <= 16'h8000;
+		end else begin
+			if(clr)
+				ovf <= 1'b0;
+
+			res <= rounded;
+		end;
+	     end else begin
+			if(clr)
+				ovf <= 1'b0;
+	     end;
+	end;
+    end;
 
 endmodule
