@@ -22,8 +22,18 @@ module mac_rne_sat (
     logic [7:0] remainder;
     logic signed [16:0] rounded;
 
-    assign product = a*b;
-    //assign quotient = product >>> 8;
+    //assign product = a*b;
+  always @(*) begin
+    product = a*b;
+    snapshot = accumulate;
+    quotient =  snapshot >>> 8;
+    remainder = snapshot - ({snapshot[27:8],8'b0});
+    if(remainder > 128 || (remainder == 128 && quotient[0] == 1)) begin
+                    rounded = quotient+ 1;
+	        end else begin
+                    rounded = quotient;
+	        end;
+  end;
 
     always_ff @(posedge clk) begin
 	if(rst) begin
@@ -31,7 +41,6 @@ module mac_rne_sat (
             res_valid <= 1'b0;
             ovf       <= 1'b0;
             accumulate <= 28'b0;
-            snapshot <= 28'b0;
 	end else begin
 
             //accumulate
@@ -44,20 +53,21 @@ module mac_rne_sat (
             end;
 
 	    //Capture snapshot
-	    //snapshot <= accumulate;
+	    //snapshot = accumulate;
 
             //readout and saturation
             //round half to even at 8-LSBs
 	    res_valid <= rd;
 	    if(rd) begin
-                quotient =  accumulate >>> 8;
-          remainder = accumulate - ({accumulate[27:8],8'b0});
+          /*      quotient =  snapshot >>> 8;
+          remainder = snapshot - ({snapshot[27:8],8'b0});
 	        if(remainder > 128 || (remainder == 128 && quotient[0] == 1)) begin
                     rounded = quotient+ 1;
 	        //end else if(remainder < 128 || (remainder == 128 && quotient[0] == 0)) begin
 	        end else begin
                     rounded = quotient;
 	        end;
+            */
 
 		if(rounded[16] != rounded[15]) begin
 			ovf <= 1'b1;
