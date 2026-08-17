@@ -39,7 +39,7 @@ module mac_rne_sat (
 	    end else if(clr) begin //clr = 1 and en = 0
                 accumulate <= 28'b0;
             end;
-
+        //capture snapshot
 	    snapshot = accumulate;
 
             //readout and saturation
@@ -56,7 +56,6 @@ module mac_rne_sat (
 	        end;
 
 		if(rounded[16] != rounded[15]) begin
-			//ovf <= 1'b1;
             sat_flag = 1'b1;
           if(rounded[16] == 1'b0) begin
 				res <= 16'h7fff;
@@ -64,15 +63,9 @@ module mac_rne_sat (
 				res <= 16'h8000;
             end;
 		end else begin
-			//if(clr)
-				//ovf <= 1'b0;
-          sat_flag = 1'b0;
-
+            sat_flag = 1'b0;
 			res <= rounded;
 		end;
-	     //end else begin
-			//if(clr)
-				//ovf <= 1'b0;
 	     end;
       if(rd && sat_flag)
         ovf <= 1'b1;
