@@ -63,7 +63,7 @@ To perform rounding and saturation, use the value of accumulator at the end of c
 **Rounding — round-half-to-even at the 8 LSBs.** Let
 `q = floor(snapshot / 256)` and `r = snapshot − 256·q` to handle both 
  positive and negative values.
-'r' is unsigned value with range `0 ≤ r ≤ 255` — including for negative snapshots. 
+'r' is a value with range `0 ≤ r ≤ 255` — including for negative snapshots. 
 
  The rounded value is:
 - `q` if `r < 128`;
